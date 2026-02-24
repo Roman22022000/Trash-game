@@ -1,10 +1,287 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <title>Title</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Exchange Panel</title>
+
+<style>
+body{
+    margin:0;
+    background:#eef1f5;
+    font-family:Segoe UI, sans-serif;
+    padding:50px;
+}
+
+.panel{
+    background:white;
+    padding:30px;
+    border-radius:14px;
+    box-shadow:0 15px 40px rgba(0,0,0,0.08);
+    margin-bottom:50px;
+}
+
+.exchange{
+    display:flex;
+    gap:40px;
+    justify-content:center;
+    align-items:center;
+    margin-bottom:30px;
+}
+
+.box{
+    width:260px;
+    text-align:center;
+}
+
+.item-slot{
+    width:220px;
+    height:180px;
+    border:2px solid #d6dbe6;
+    border-radius:12px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    cursor:pointer;
+    background:#f9fbff;
+    margin:0 auto 12px;
+    transition:0.2s;
+}
+
+.item-slot:hover{
+    border-color:#3c57ff;
+}
+
+.item-slot img{
+    max-width:90%;
+    max-height:90%;
+}
+
+.plus{
+    font-size:40px;
+    color:#3c57ff;
+}
+
+input{
+    width:100%;
+    padding:8px;
+    border-radius:8px;
+    border:1px solid #ccd3e0;
+    margin-bottom:10px;
+}
+
+button{
+    padding:12px 20px;
+    border:none;
+    border-radius:10px;
+    font-weight:600;
+    cursor:pointer;
+}
+
+.primary{
+    background:#3c57ff;
+    color:white;
+}
+
+.success{
+    background:#2e9d63;
+    color:white;
+}
+
+.market-card{
+    background:white;
+    padding:20px;
+    border-radius:12px;
+    box-shadow:0 10px 30px rgba(0,0,0,0.06);
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:15px;
+}
+
+.market-card img{
+    height:50px;
+}
+
+/* modal */
+.modal{
+    position:fixed;
+    top:0;
+    left:0;
+    width:100%;
+    height:100%;
+    background:rgba(0,0,0,0.4);
+    display:none;
+    align-items:center;
+    justify-content:center;
+}
+
+.modal-content{
+    background:white;
+    padding:25px;
+    border-radius:14px;
+    display:grid;
+    grid-template-columns:repeat(auto-fill,100px);
+    gap:15px;
+    max-width:400px;
+}
+
+.modal-content img{
+    width:100px;
+    height:100px;
+    object-fit:cover;
+    cursor:pointer;
+    border-radius:10px;
+    border:2px solid transparent;
+}
+
+.modal-content img:hover{
+    border-color:#3c57ff;
+}
+</style>
 </head>
+
 <body>
 
+<h2>Панель обмена</h2>
+
+<div class="panel">
+    <div class="exchange">
+
+        <div class="box">
+            <h4>Отдаю</h4>
+            <div class="item-slot" onclick="openModal('give')" id="giveSlot">
+                <div class="plus">+</div>
+            </div>
+            <input type="number" id="giveAmount" placeholder="Количество" min="1">
+        </div>
+
+        ⇄
+
+        <div class="box">
+            <h4>Получаю</h4>
+            <div class="item-slot" onclick="openModal('take')" id="takeSlot">
+                <div class="plus">+</div>
+            </div>
+            <input type="number" id="takeAmount" placeholder="Количество" min="1">
+        </div>
+
+    </div>
+
+    <div style="text-align:center;">
+        <button class="success" onclick="publish()">Выложить на витрину</button>
+    </div>
+</div>
+
+<h2>Рынок</h2>
+<div id="market"></div>
+
+<div class="modal" id="modal">
+    <div class="modal-content" id="modalContent"></div>
+</div>
+
+<script>
+
+// Полные пути к изображениям
+const imageFiles = [
+    "trash/Apelsin.png",
+    "trash/Lokon.png",
+    "trash/Nosok.png",
+    "trash/Palochki.png",
+    "trash/Plinka.png",
+    "trash/Tea-paket.png",
+    "trash/Strela.png",
+    "trash/zub.png",
+    "trash/Vanna.png",
+    "trash/Nosok.png"
+];
+
+let currentTarget = null;
+let giveData = {};
+let takeData = {};
+
+function openModal(target){
+    currentTarget = target;
+    const modal = document.getElementById("modal");
+    const content = document.getElementById("modalContent");
+    content.innerHTML = "";
+
+    imageFiles.forEach(path=>{
+        const img = document.createElement("img");
+        img.src = path;
+        img.onclick = ()=>{
+            selectItem(path);
+        };
+        content.appendChild(img);
+    });
+
+    modal.style.display = "flex";
+}
+
+function selectItem(path){
+    const slot = document.getElementById(currentTarget+"Slot");
+    slot.innerHTML = `<img src="${path}">`;
+
+    if(currentTarget === "give"){
+        giveData.image = path;
+    } else {
+        takeData.image = path;
+    }
+
+    document.getElementById("modal").style.display = "none";
+}
+
+function publish(){
+
+    const giveAmount = document.getElementById("giveAmount").value;
+    const takeAmount = document.getElementById("takeAmount").value;
+
+    if(!giveData.image || !takeData.image || !giveAmount || !takeAmount){
+        alert("Заполните обе стороны");
+        return;
+    }
+
+    const market = document.getElementById("market");
+
+    const card = document.createElement("div");
+    card.className = "market-card";
+
+    card.innerHTML = `
+        <div style="display:flex;align-items:center;gap:15px;">
+            <img src="${giveData.image}" height="50">
+            <strong>${giveAmount}</strong>
+            →
+            <img src="${takeData.image}" height="50">
+            <strong>${takeAmount}</strong>
+        </div>
+        <button class="primary">Обменять</button>
+    `;
+
+    card.querySelector("button").onclick = ()=>{
+        card.remove();
+    };
+
+    market.appendChild(card);
+
+    // Сброс
+    document.getElementById("giveSlot").innerHTML='<div class="plus">+</div>';
+    document.getElementById("takeSlot").innerHTML='<div class="plus">+</div>';
+    document.getElementById("giveAmount").value="";
+    document.getElementById("takeAmount").value="";
+    giveData={};
+    takeData={};
+}
+
+// Закрытие модального окна
+document.getElementById("modal").onclick = function(e){
+    if(e.target.id === "modal"){
+        this.style.display = "none";
+    }
+}
+
+</script>
+
 </body>
+
+
 </html>
